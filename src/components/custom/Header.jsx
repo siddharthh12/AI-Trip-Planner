@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Button } from '../UI/Button'
+import { Button } from '../ui/button'
 
 import {
   Popover,
