@@ -64,11 +64,13 @@ console.log(user)
   return (
     <div className='p-3 shadow-sm flex justify-between items-center px-5'>
 <img
-        src="/logo.png"
+        src="/logo1.png"
         alt="App Logo"
         className="h-20 object-contain cursor-pointer"
         onClick={() => (window.location.href = '/')} 
-      />      <div>
+      />     
+      
+        <div>
         {user?
         <div className='flex items-center gap-3'>
           <a href='/create-trip'>
