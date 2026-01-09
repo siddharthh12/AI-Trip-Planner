@@ -1,21 +1,23 @@
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, deleteDoc, doc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import UserTripCardItem from './components/UserTripCardItem';
 import { db } from '@/service/firebaseConfig';
-import { FaPlane, FaRoute } from 'react-icons/fa';
+import { FaPlane, FaRoute, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 // Color palette
 const colors = {
-  terracotta: '#B25E39',
-  darkGray: '#473D3A',
-  beige: '#F3F3F3'
+    terracotta: '#B25E39',
+    darkGray: '#473D3A',
+    beige: '#F3F3F3'
 };
 
 function MyTrips() {
     const navigate = useNavigate();
 
-    const [userTrips, setUserTrips] = useState([])
+    const [userTrips, setUserTrips] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 6;
 
     useEffect(() => {
         GetUserTrips();
@@ -34,21 +36,41 @@ function MyTrips() {
         }
         const q = query(collection(db, 'AITrip'), where('userEmail', '==', user?.email))
         const querySnapshot = await getDocs(q);
+        const trips = [];
         querySnapshot.forEach((doc) => {
             // doc.data() is never undefined for query doc snapshots
             console.log(doc.id, " => ", doc.data());
-            setUserTrips(prevVal => [...prevVal, doc.data()])
+            trips.push({ id: doc.id, ...doc.data() }); // Ensure ID is included
         });
+        setUserTrips(trips);
     }
+
+    const handleDeleteTrip = async (trip) => {
+        if (window.confirm('Are you sure you want to delete this trip?')) {
+            try {
+                await deleteDoc(doc(db, "AITrip", trip.id));
+                setUserTrips(prev => prev.filter(t => t.id !== trip.id));
+            } catch (error) {
+                console.error("Error deleting trip:", error);
+                alert("Failed to delete trip");
+            }
+        }
+    }
+
+    // Pagination Logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentTrips = userTrips.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(userTrips.length / itemsPerPage);
 
     return (
         <div className='min-h-screen' style={{ backgroundColor: colors.beige }}>
             <div className='sm:px-10 md:px-32 lg:px-56 xl:px-72 px-5 py-10'>
-                
+
                 {/* Header Section */}
                 <div className='bg-white rounded-3xl shadow-lg p-8 md:p-12 mb-10'>
                     <div className='flex items-center gap-4 mb-4'>
-                        <div 
+                        <div
                             className='w-16 h-16 rounded-full flex items-center justify-center'
                             style={{ backgroundColor: `${colors.terracotta}20` }}
                         >
@@ -59,8 +81,8 @@ function MyTrips() {
                                 My Trips
                             </h2>
                             <p className='text-gray-600 mt-1'>
-                                {userTrips?.length > 0 
-                                    ? `You have ${userTrips.length} trip${userTrips.length > 1 ? 's' : ''} planned` 
+                                {userTrips?.length > 0
+                                    ? `You have ${userTrips.length} trip${userTrips.length > 1 ? 's' : ''} planned`
                                     : 'Start planning your first adventure'}
                             </p>
                         </div>
@@ -93,35 +115,68 @@ function MyTrips() {
 
                 {/* Trips Grid */}
                 <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-                    {userTrips?.length > 0 ? userTrips.map((trip, index) => (
-                        <UserTripCardItem trip={trip} key={index} />
+                    {userTrips?.length > 0 ? currentTrips.map((trip, index) => (
+                        <UserTripCardItem
+                            trip={trip}
+                            key={index}
+                            onDelete={handleDeleteTrip}
+                        />
                     ))
-                    : [1, 2, 3, 4, 5, 6].map((item, index) => (
-                        <div 
-                            key={index} 
-                            className='h-[280px] w-full rounded-2xl animate-pulse shadow-md'
-                            style={{ backgroundColor: '#E5E7EB' }}
-                        >
-                            {/* Skeleton Card */}
-                            <div className='p-6 h-full flex flex-col justify-between'>
-                                <div>
-                                    <div className='h-6 bg-gray-300 rounded-lg mb-3 w-3/4'></div>
-                                    <div className='h-4 bg-gray-300 rounded-lg mb-2 w-full'></div>
-                                    <div className='h-4 bg-gray-300 rounded-lg w-2/3'></div>
-                                </div>
-                                <div className='space-y-2'>
-                                    <div className='h-4 bg-gray-300 rounded-lg w-1/2'></div>
-                                    <div className='h-10 bg-gray-300 rounded-lg w-full'></div>
+                        : [1, 2, 3, 4, 5, 6].map((item, index) => (
+                            <div
+                                key={index}
+                                className='h-[280px] w-full rounded-2xl animate-pulse shadow-md'
+                                style={{ backgroundColor: '#E5E7EB' }}
+                            >
+                                {/* Skeleton Card */}
+                                <div className='p-6 h-full flex flex-col justify-between'>
+                                    <div>
+                                        <div className='h-6 bg-gray-300 rounded-lg mb-3 w-3/4'></div>
+                                        <div className='h-4 bg-gray-300 rounded-lg mb-2 w-full'></div>
+                                        <div className='h-4 bg-gray-300 rounded-lg w-2/3'></div>
+                                    </div>
+                                    <div className='space-y-2'>
+                                        <div className='h-4 bg-gray-300 rounded-lg w-1/2'></div>
+                                        <div className='h-10 bg-gray-300 rounded-lg w-full'></div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
                 </div>
+
+                {/* Pagination Controls */}
+                {userTrips.length > itemsPerPage && (
+                    <div className='flex justify-center items-center gap-4 mt-10'>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className={`p-3 rounded-full shadow-md transition-all ${currentPage === 1
+                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    : 'bg-white text-gray-700 hover:bg-gray-50 hover:text-black'
+                                }`}
+                        >
+                            <FaChevronLeft />
+                        </button>
+                        <span className='text-gray-600 font-medium'>
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className={`p-3 rounded-full shadow-md transition-all ${currentPage === totalPages
+                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    : 'bg-white text-gray-700 hover:bg-gray-50 hover:text-black'
+                                }`}
+                        >
+                            <FaChevronRight />
+                        </button>
+                    </div>
+                )}
 
                 {/* Empty State - Only shows when loading is complete and no trips exist */}
                 {userTrips?.length === 0 && (
                     <div className='bg-white rounded-3xl shadow-lg p-12 text-center mt-10'>
-                        <div 
+                        <div
                             className='w-24 h-24 rounded-full mx-auto flex items-center justify-center mb-6'
                             style={{ backgroundColor: `${colors.terracotta}20` }}
                         >
@@ -133,7 +188,7 @@ function MyTrips() {
                         <p className='text-gray-600 mb-6 max-w-md mx-auto'>
                             Start planning your first adventure and create unforgettable memories!
                         </p>
-                        <button 
+                        <button
                             onClick={() => navigate('/create-trip')}
                             className='px-8 py-4 text-lg font-semibold text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105'
                             style={{ backgroundColor: colors.terracotta }}
