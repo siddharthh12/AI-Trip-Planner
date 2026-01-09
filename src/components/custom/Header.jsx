@@ -53,7 +53,7 @@ console.log(user)
         console.log("User profile:", response.data); // Log user data
         localStorage.setItem('user', JSON.stringify(response.data));
         setOpenDialog(false);
-        OnGenerateTrip(); // Call the function to generate the trip after signing in
+        OnGenerateTrip(); 
       })
       .catch((error) => {
         console.error("Failed to fetch user profile:", error);
