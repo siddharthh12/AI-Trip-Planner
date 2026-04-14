@@ -2,6 +2,7 @@
   <img src="public/logo.png" alt="AI Travel Planner Logo" width="120" />
   <h1>🌍 AI Travel Planner</h1>
   <p><strong>Your Ultimate AI-Powered Itinerary Generator</strong></p>
+  <h1>Live Link :- https://ai-trip-planner-bice.vercel.app/</h1>
 </div>
 
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
@@ -71,10 +72,6 @@ AI Travel Planner is a modern, intelligent travel companion that takes the hassl
    ```bash
    npm run dev
    ```
-
-## 📸 Screenshots
-
-*(Add screenshots here to showcase your beautiful UI!)*
 
 ## 🤝 Contributing
 
